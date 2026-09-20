@@ -162,12 +162,13 @@ function renderAlbumPage(album, req) {
   const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
   const photos = album.photos.map(toAbsoluteUrl);
   const safeTitle = escapeHtml(album.title);
-  const previewVersion = album.updatedAt || album.createdAt || Date.now();
+  const previewVersion = req.query.v || album.updatedAt || album.createdAt || Date.now();
   const previewUrl = `${baseUrl}/album/${album.id}/preview.gif?v=${previewVersion}`;
   const brandName = '@xuan.atic';
   const safeDescription = escapeHtml(album.description || 'Shared photo album');
-  const displayDate = album.date ? escapeHtml(album.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$2 / $3 / $1')) : '█ / █ / 2006';
-  const publicUrl = `${baseUrl}/album/${album.id}`;
+  const displayYear = String(album.date || '').match(/\d{4}/)?.[0] || '2006';
+  const displayDate = `█ / █ / ${displayYear}`;
+  const publicUrl = `${baseUrl}/album/${album.id}?v=${previewVersion}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -177,7 +178,6 @@ function renderAlbumPage(album, req) {
     <title>${brandName}</title>
     <meta property="og:type" content="website" />
     <meta property="og:title" content="${brandName}" />
-    <meta property="og:description" content="${safeDescription}" />
     <meta property="og:image" content="${previewUrl}" />
     <meta property="og:image:type" content="image/gif" />
     <meta property="og:image:width" content="540" />
@@ -185,7 +185,6 @@ function renderAlbumPage(album, req) {
     <meta property="og:url" content="${publicUrl}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${brandName}" />
-    <meta name="twitter:description" content="${safeDescription}" />
     <meta name="twitter:image" content="${previewUrl}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
@@ -193,7 +192,7 @@ function renderAlbumPage(album, req) {
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 12px; padding: 16px; }
       .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 12px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
-      .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 4px; }
+      .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 10px; }
       .post-text { width: min(100%, 520px); margin: 12px auto 0; }
       .date { color: #94a3b8; font-size: .76rem; margin: 0 0 5px; }
       .description { color: #cbd5e1; margin: 0; text-align: left; font-size: .82rem; }
@@ -206,6 +205,8 @@ function renderAlbumPage(album, req) {
   <body>
     <main>
       <div class="album-shell">
+        <p class="eyebrow top-handle">${brandName}</p>
+
         <div class="main-media">
           <img src="${cover}" alt="${safeTitle}" />
           <div class="controls">
@@ -216,8 +217,8 @@ function renderAlbumPage(album, req) {
 
         <div class="post-text">
           <p class="eyebrow">${brandName}</p>
-          <p class="date">${displayDate}</p>
           <p class="description">${safeDescription}</p>
+          <p class="date">${displayDate}</p>
         </div>
 
       </div>
@@ -260,7 +261,7 @@ app.post('/api/albums', upload.array('photos', 25), (req, res) => {
     id: slugify(title),
     title: title.trim(),
     description: description ? description.trim() : '',
-    date: req.body.date || '',
+    date: req.body.year || '2006',
     photos,
     createdAt: Date.now(),
   };

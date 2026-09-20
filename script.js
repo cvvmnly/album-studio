@@ -2,7 +2,7 @@ const STORAGE_KEY = 'album-studio-data';
 const albumForm = document.getElementById('album-form');
 const albumTitleInput = document.getElementById('album-title');
 const albumDescriptionInput = document.getElementById('album-description');
-const albumDateInput = document.getElementById('album-date');
+const albumYearInput = document.getElementById('album-year');
 const albumPhotosInput = document.getElementById('album-photos');
 const addMorePhotosInput = document.getElementById('add-more-photos');
 const albumList = document.getElementById('album-list');
@@ -53,7 +53,7 @@ albumForm?.addEventListener('submit', async (event) => {
 
   const title = albumTitleInput.value.trim();
   const description = albumDescriptionInput.value.trim();
-  const date = albumDateInput.value;
+  const year = albumYearInput.value;
   const files = [...albumPhotosInput.files || []];
 
   if (!title) {
@@ -64,7 +64,7 @@ albumForm?.addEventListener('submit', async (event) => {
   const formData = new FormData();
   formData.append('title', title);
   formData.append('description', description);
-  if (date) formData.append('date', date);
+  formData.append('year', year);
   files.forEach((file) => formData.append('photos', file));
 
   const response = await fetch('/api/albums', {
@@ -290,10 +290,8 @@ function selectAlbum(albumId) {
 }
 
 function formatAlbumDate(value) {
-  if (!value) return '█ / █ / 2006';
-
-  const [year, month, day] = value.split('-');
-  return `${month} / ${day} / ${year}`;
+  const year = value?.match(/\d{4}/)?.[0] || '2006';
+  return `█ / █ / ${year}`;
 }
 
 function renderActivePhoto() {
@@ -364,7 +362,7 @@ function getAlbumShareUrl(albumId) {
 
 function updateSocialMeta(album) {
   const firstImage = album?.photos?.[0] || '';
-  const title = album ? `${album.title} | @xuan.atic` : '@xuan.atic';
+  const title = '@xuan.atic';
   const description = album?.description || 'Create and share photo albums with a scrollable slideshow.';
 
   document.title = title;

@@ -94,7 +94,8 @@ h1 {
 }
 
 input[type="text"],
-textarea {
+textarea,
+select {
   width: 100%;
   background: rgba(15, 23, 42, 0.7);
   color: var(--text);
@@ -296,7 +297,10 @@ textarea:focus {
 
 .slideshow {
   display: grid;
-  gap: 18px;
+  grid-template-columns: 46px minmax(0, 520px) 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .main-media {
@@ -322,9 +326,8 @@ textarea:focus {
 }
 
 .nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;
+  transform: none;
   width: 46px;
   height: 46px;
   border-radius: 50%;
@@ -336,11 +339,18 @@ textarea:focus {
 }
 
 #prev-photo {
-  left: 14px;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 #next-photo {
-  right: 14px;
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.slideshow .main-media {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .thumb-strip-wrapper {
@@ -398,5 +408,21 @@ textarea:focus {
   .viewer-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .slideshow {
+    grid-template-columns: 1fr;
+  }
+
+  .slideshow .main-media,
+  #prev-photo,
+  #next-photo {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  #prev-photo,
+  #next-photo {
+    display: inline-block;
   }
 }
