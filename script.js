@@ -46,7 +46,7 @@ async function initializeApp() {
   setupSharePage();
 }
 
-albumForm.addEventListener('submit', async (event) => {
+albumForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
   const title = albumTitleInput.value.trim();
@@ -75,7 +75,7 @@ albumForm.addEventListener('submit', async (event) => {
   albumForm.reset();
 });
 
-shareButton.addEventListener('click', async () => {
+shareButton?.addEventListener('click', async () => {
   const album = albums.find((item) => item.id === selectedAlbumId);
   if (!album) return;
 
@@ -92,7 +92,7 @@ shareButton.addEventListener('click', async () => {
   }
 });
 
-deleteButton.addEventListener('click', () => {
+deleteButton?.addEventListener('click', () => {
   if (!selectedAlbumId) return;
 
   const confirmation = window.confirm('Delete this album and all of its photos?');
@@ -113,7 +113,7 @@ deleteButton.addEventListener('click', () => {
   selectAlbum(selectedAlbumId);
 });
 
-addMorePhotosInput.addEventListener('change', async (event) => {
+addMorePhotosInput?.addEventListener('change', async (event) => {
   const album = albums.find((entry) => entry.id === selectedAlbumId);
   if (!album) return;
 
@@ -127,7 +127,7 @@ addMorePhotosInput.addEventListener('change', async (event) => {
   addMorePhotosInput.value = '';
 });
 
-prevPhotoButton.addEventListener('click', () => {
+prevPhotoButton?.addEventListener('click', () => {
   if (!selectedAlbumId) return;
   const album = getSelectedAlbum();
   if (!album?.photos.length) return;
@@ -136,7 +136,7 @@ prevPhotoButton.addEventListener('click', () => {
   renderActivePhoto();
 });
 
-nextPhotoButton.addEventListener('click', () => {
+nextPhotoButton?.addEventListener('click', () => {
   if (!selectedAlbumId) return;
   const album = getSelectedAlbum();
   if (!album?.photos.length) return;
