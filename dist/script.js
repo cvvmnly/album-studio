@@ -27,175 +27,146 @@ const shareNextButton = document.getElementById('share-next');
 const sharePageContainer = document.getElementById('share-page-container');
 const shareEmpty = document.getElementById('share-empty');
 
-let albums = [];
+let albums = loadAlbums();
 let selectedAlbumId = null;
 let activePhotoIndex = 0;
 
-initializeApp();
+seedDefaultAlbums();
+renderAlbums();
+restoreFocusFromHash();
+setupSharePage();
 
-async function initializeApp() {
-  albums = await loadAlbums();
+if (albumForm) {
+  albumForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
 
-  if (!albums.length) {
-    albums = getDefaultAlbums();
+    const title = albumTitleInput.value.trim();
+    const description = albumDescriptionInput.value.trim();
+    const files = [...(albumPhotosInput?.files || [])];
+
+    if (!title) {
+      albumTitleInput.focus();
+      return;
+    }
+
+    const photoData = await readFilesAsDataUrls(files);
+
+    const newAlbum = {
+      id: createSlug(title),
+      title,
+      description,
+      photos: photoData,
+      createdAt: Date.now(),
+    };
+
+    albums = [newAlbum, ...albums];
     persistAlbums();
-  }
-
-  renderAlbums();
-  restoreFocusFromHash();
-  setupSharePage();
+    renderAlbums();
+    selectAlbum(newAlbum.id);
+    albumForm.reset();
+  });
 }
 
-albumForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
+if (shareButton) {
+  shareButton.addEventListener('click', async () => {
+    const album = albums.find((item) => item.id === selectedAlbumId);
+    if (!album) return;
 
-  const title = albumTitleInput.value.trim();
-  const description = albumDescriptionInput.value.trim();
-  const files = [...albumPhotosInput.files || []];
+    const shareUrl = getAlbumShareUrl(album.id, 'share.html');
 
-  if (!title) {
-    albumTitleInput.focus();
-    return;
-  }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      shareButton.textContent = 'Link copied';
+      setTimeout(() => {
+        shareButton.textContent = 'Copy share link';
+      }, 1500);
+    } catch (error) {
+      window.prompt('Copy this album URL:', shareUrl);
+    }
+  });
+}
 
-  const photoData = await readFilesAsDataUrls(files);
+if (deleteButton) {
+  deleteButton.addEventListener('click', () => {
+    if (!selectedAlbumId) return;
 
-  const newAlbum = {
-    id: createSlug(title),
-    title,
-    description,
-    photos: photoData,
-    createdAt: Date.now(),
-  };
+    const confirmation = window.confirm('Delete this album and all of its photos?');
+    if (!confirmation) return;
 
-  albums = [newAlbum, ...albums];
-  persistAlbums();
-  renderAlbums();
-  selectAlbum(newAlbum.id);
-  albumForm.reset();
-});
+    albums = albums.filter((album) => album.id !== selectedAlbumId);
+    persistAlbums();
 
-shareButton.addEventListener('click', async () => {
-  const album = albums.find((item) => item.id === selectedAlbumId);
-  if (!album) return;
+    if (albums.length === 0) {
+      selectedAlbumId = null;
+      updateHash();
+      renderAlbums();
+      return;
+    }
 
-  const shareUrl = getAlbumShareUrl(album.id, 'share.html');
-
-  try {
-    await navigator.clipboard.writeText(shareUrl);
-    shareButton.textContent = 'Link copied';
-    setTimeout(() => {
-      shareButton.textContent = 'Copy share link';
-    }, 1500);
-  } catch (error) {
-    window.prompt('Copy this album URL:', shareUrl);
-  }
-});
-
-deleteButton.addEventListener('click', () => {
-  if (!selectedAlbumId) return;
-
-  const confirmation = window.confirm('Delete this album and all of its photos?');
-  if (!confirmation) return;
-
-  albums = albums.filter((album) => album.id !== selectedAlbumId);
-  persistAlbums();
-
-  if (albums.length === 0) {
-    selectedAlbumId = null;
-    updateHash();
+    selectedAlbumId = albums[0].id;
     renderAlbums();
-    return;
-  }
+    selectAlbum(selectedAlbumId);
+  });
+}
 
-  selectedAlbumId = albums[0].id;
-  renderAlbums();
-  selectAlbum(selectedAlbumId);
-});
+if (addMorePhotosInput) {
+  addMorePhotosInput.addEventListener('change', async (event) => {
+    const album = albums.find((entry) => entry.id === selectedAlbumId);
+    if (!album) return;
 
-addMorePhotosInput.addEventListener('change', async (event) => {
-  const album = albums.find((entry) => entry.id === selectedAlbumId);
-  if (!album) return;
+    const files = [...(event.target.files || [])];
+    if (!files.length) return;
 
-  const files = [...event.target.files || []];
-  if (!files.length) return;
+    album.photos = [...album.photos, ...(await readFilesAsDataUrls(files))];
+    persistAlbums();
+    renderAlbums();
+    selectAlbum(album.id);
+    addMorePhotosInput.value = '';
+  });
+}
 
-  album.photos = [...album.photos, ...(await readFilesAsDataUrls(files))];
-  persistAlbums();
-  renderAlbums();
-  selectAlbum(album.id);
-  addMorePhotosInput.value = '';
-});
+if (prevPhotoButton) {
+  prevPhotoButton.addEventListener('click', () => {
+    if (!selectedAlbumId) return;
+    const album = getSelectedAlbum();
+    if (!album?.photos.length) return;
 
-prevPhotoButton.addEventListener('click', () => {
-  if (!selectedAlbumId) return;
-  const album = getSelectedAlbum();
-  if (!album?.photos.length) return;
+    activePhotoIndex = (activePhotoIndex - 1 + album.photos.length) % album.photos.length;
+    renderActivePhoto();
+  });
+}
 
-  activePhotoIndex = (activePhotoIndex - 1 + album.photos.length) % album.photos.length;
-  renderActivePhoto();
-});
+if (nextPhotoButton) {
+  nextPhotoButton.addEventListener('click', () => {
+    if (!selectedAlbumId) return;
+    const album = getSelectedAlbum();
+    if (!album?.photos.length) return;
 
-nextPhotoButton.addEventListener('click', () => {
-  if (!selectedAlbumId) return;
-  const album = getSelectedAlbum();
-  if (!album?.photos.length) return;
+    activePhotoIndex = (activePhotoIndex + 1) % album.photos.length;
+    renderActivePhoto();
+  });
+}
 
-  activePhotoIndex = (activePhotoIndex + 1) % album.photos.length;
-  renderActivePhoto();
-});
-
-async function loadAlbums() {
+function loadAlbums() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) {
-        return parsed;
-      }
-    }
-  } catch (_error) {
-    // Ignore invalid local cache and fall back to public album JSON.
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    return [];
   }
-
-  const candidates = [
-    '/albums.json',
-    '/data/albums.json',
-    './albums.json',
-    './data/albums.json',
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      const response = await fetch(candidate, { cache: 'no-store' });
-      if (!response.ok) continue;
-
-      const parsed = await response.json();
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
-    } catch (_error) {
-      // Keep trying the next public album file location.
-    }
-  }
-
-  return [];
 }
 
 function persistAlbums() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(albums));
-  } catch (_error) {
-    // Ignore storage errors in private browsing or restricted contexts.
-  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(albums));
 }
 
 function renderAlbums() {
+  if (!albumList) return;
   albumList.innerHTML = '';
 
   if (!albums.length) {
-    emptyState.classList.remove('hidden');
-    albumView.classList.add('hidden');
+    if (emptyState) emptyState.classList.remove('hidden');
+    if (albumView) albumView.classList.add('hidden');
     selectedAlbumId = null;
     return;
   }
@@ -225,17 +196,19 @@ function selectAlbum(albumId) {
   updateHash();
   updateSocialMeta(album);
 
-  emptyState.classList.add('hidden');
-  albumView.classList.remove('hidden');
+  if (emptyState) emptyState.classList.add('hidden');
+  if (albumView) albumView.classList.remove('hidden');
 
-  albumKicker.textContent = 'Album';
-  albumNameNode.textContent = album.title;
-  albumDescriptionDisplay.textContent = album.description || 'No description added.';
+  if (albumKicker) albumKicker.textContent = 'Album';
+  if (albumNameNode) albumNameNode.textContent = album.title;
+  if (albumDescriptionDisplay) albumDescriptionDisplay.textContent = album.description || 'No description added.';
 
   if (!album.photos.length) {
-    mainImage.src = '';
-    mainImage.alt = 'No photos in album yet';
-    thumbStrip.innerHTML = '';
+    if (mainImage) {
+      mainImage.src = '';
+      mainImage.alt = 'No photos in album yet';
+    }
+    if (thumbStrip) thumbStrip.innerHTML = '';
     return;
   }
 
@@ -247,25 +220,29 @@ function renderActivePhoto() {
   if (!album || !album.photos.length) return;
 
   const photo = album.photos[activePhotoIndex];
-  mainImage.src = photo;
-  mainImage.alt = `${album.title} photo ${activePhotoIndex + 1}`;
+  if (mainImage) {
+    mainImage.src = photo;
+    mainImage.alt = `${album.title} photo ${activePhotoIndex + 1}`;
+  }
 
-  thumbStrip.innerHTML = album.photos
-    .map((src, index) => {
-      return `
-        <button type="button" class="thumb-button ${index === activePhotoIndex ? 'active' : ''}" data-index="${index}" aria-label="View photo ${index + 1}">
-          <img src="${src}" alt="Thumbnail ${index + 1}" />
-        </button>
-      `;
-    })
-    .join('');
+  if (thumbStrip) {
+    thumbStrip.innerHTML = album.photos
+      .map((src, index) => {
+        return `
+          <button type="button" class="thumb-button ${index === activePhotoIndex ? 'active' : ''}" data-index="${index}" aria-label="View photo ${index + 1}">
+            <img src="${src}" alt="Thumbnail ${index + 1}" />
+          </button>
+        `;
+      })
+      .join('');
 
-  thumbStrip.querySelectorAll('.thumb-button').forEach((button) => {
-    button.addEventListener('click', () => {
-      activePhotoIndex = Number(button.dataset.index);
-      renderActivePhoto();
+    thumbStrip.querySelectorAll('.thumb-button').forEach((button) => {
+      button.addEventListener('click', () => {
+        activePhotoIndex = Number(button.dataset.index);
+        renderActivePhoto();
+      });
     });
-  });
+  }
 }
 
 function getSelectedAlbum() {
@@ -302,26 +279,8 @@ function restoreFocusFromHash() {
 }
 
 function getAlbumShareUrl(albumId, page = 'index.html') {
-  const currentUrl = new URL(window.location.href);
-  const repoBase = (() => {
-    const currentPath = currentUrl.pathname.replace(/\/+$/, '');
-    const segments = currentPath.split('/').filter(Boolean);
-
-    if (segments.length && segments[0] === 'album-studio') {
-      return '/album-studio';
-    }
-
-    if (segments.length && segments.includes('album-studio')) {
-      const idx = segments.indexOf('album-studio');
-      return `/${segments.slice(0, idx + 1).join('/')}`;
-    }
-
-    return '';
-  })();
-
-  const relativePath = page.startsWith('/') ? page : `${repoBase}/${page}`.replace(/\/+/g, '/');
-  const url = new URL(relativePath, currentUrl.origin);
-
+  const url = new URL(window.location.href);
+  url.pathname = page;
   url.search = `?album=${encodeURIComponent(albumId)}`;
   url.hash = '';
   return url.toString();
@@ -367,13 +326,13 @@ function setupSharePage() {
   const album = albums.find((item) => item.id === albumId);
 
   if (!album) {
-    sharePageContainer.classList.add('hidden');
-    shareEmpty.classList.remove('hidden');
+    if (sharePageContainer) sharePageContainer.classList.add('hidden');
+    if (shareEmpty) shareEmpty.classList.remove('hidden');
     return;
   }
 
-  shareTitle.textContent = album.title;
-  shareDescription.textContent = album.description || 'No description added.';
+  if (shareTitle) shareTitle.textContent = album.title;
+  if (shareDescription) shareDescription.textContent = album.description || 'No description added.';
 
   const firstImage = album.photos[0];
   document.title = `${album.title} | Album Studio`;
@@ -390,39 +349,47 @@ function setupSharePage() {
 
   function renderSharePhoto() {
     const item = album.photos[shareIndex];
-    shareMainImage.src = item;
-    shareMainImage.alt = `${album.title} photo ${shareIndex + 1}`;
+    if (shareMainImage) {
+      shareMainImage.src = item;
+      shareMainImage.alt = `${album.title} photo ${shareIndex + 1}`;
+    }
 
-    shareThumbStrip.innerHTML = album.photos
-      .map((src, index) => {
-        return `
-          <button type="button" class="thumb-button ${index === shareIndex ? 'active' : ''}" data-index="${index}" aria-label="View photo ${index + 1}">
-            <img src="${src}" alt="Thumbnail ${index + 1}" />
-          </button>
-        `;
-      })
-      .join('');
+    if (shareThumbStrip) {
+      shareThumbStrip.innerHTML = album.photos
+        .map((src, index) => {
+          return `
+            <button type="button" class="thumb-button ${index === shareIndex ? 'active' : ''}" data-index="${index}" aria-label="View photo ${index + 1}">
+              <img src="${src}" alt="Thumbnail ${index + 1}" />
+            </button>
+          `;
+        })
+        .join('');
 
-    shareThumbStrip.querySelectorAll('.thumb-button').forEach((button) => {
-      button.addEventListener('click', () => {
-        shareIndex = Number(button.dataset.index);
-        renderSharePhoto();
+      shareThumbStrip.querySelectorAll('.thumb-button').forEach((button) => {
+        button.addEventListener('click', () => {
+          shareIndex = Number(button.dataset.index);
+          renderSharePhoto();
+        });
       });
+    }
+  }
+
+  if (sharePrevButton) {
+    sharePrevButton.addEventListener('click', () => {
+      shareIndex = (shareIndex - 1 + album.photos.length) % album.photos.length;
+      renderSharePhoto();
     });
   }
 
-  sharePrevButton.addEventListener('click', () => {
-    shareIndex = (shareIndex - 1 + album.photos.length) % album.photos.length;
-    renderSharePhoto();
-  });
+  if (shareNextButton) {
+    shareNextButton.addEventListener('click', () => {
+      shareIndex = (shareIndex + 1) % album.photos.length;
+      renderSharePhoto();
+    });
+  }
 
-  shareNextButton.addEventListener('click', () => {
-    shareIndex = (shareIndex + 1) % album.photos.length;
-    renderSharePhoto();
-  });
-
-  shareEmpty.classList.add('hidden');
-  sharePageContainer.classList.remove('hidden');
+  if (shareEmpty) shareEmpty.classList.add('hidden');
+  if (sharePageContainer) sharePageContainer.classList.remove('hidden');
   renderSharePhoto();
 }
 
@@ -453,8 +420,10 @@ function createSlug(value) {
     .replace(/^-+|-+$/g, '') || 'album';
 }
 
-function getDefaultAlbums() {
-  return [
+function seedDefaultAlbums() {
+  if (albums.length) return;
+
+  albums = [
     {
       id: 'sample-summer-trip',
       title: 'Summer trip',
@@ -467,12 +436,6 @@ function getDefaultAlbums() {
       createdAt: Date.now(),
     },
   ];
-}
-
-function seedDefaultAlbums() {
-  if (albums.length) return;
-
-  albums = getDefaultAlbums();
   persistAlbums();
   selectedAlbumId = albums[0].id;
 }
