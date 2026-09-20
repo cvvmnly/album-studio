@@ -58,18 +58,23 @@ albumForm?.addEventListener('submit', async (event) => {
     return;
   }
 
-  const photoData = await readFilesAsDataUrls(files);
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('description', description);
+  files.forEach((file) => formData.append('photos', file));
 
-  const newAlbum = {
-    id: createSlug(title),
-    title,
-    description,
-    photos: photoData,
-    createdAt: Date.now(),
-  };
+  const response = await fetch('/api/albums', {
+    method: 'POST',
+    body: formData,
+  });
 
-  albums = [newAlbum, ...albums];
-  persistAlbums();
+  if (!response.ok) {
+    window.alert('The album could not be uploaded.');
+    return;
+  }
+
+  const newAlbum = await response.json();
+  albums = [newAlbum, ...albums.filter((album) => album.id !== newAlbum.id)];
   renderAlbums();
   selectAlbum(newAlbum.id);
   albumForm.reset();
@@ -79,7 +84,7 @@ shareButton?.addEventListener('click', async () => {
   const album = albums.find((item) => item.id === selectedAlbumId);
   if (!album) return;
 
-  const shareUrl = getAlbumShareUrl(album.id, 'share.html');
+  const shareUrl = getAlbumShareUrl(album.id);
 
   try {
     await navigator.clipboard.writeText(shareUrl);
@@ -92,14 +97,22 @@ shareButton?.addEventListener('click', async () => {
   }
 });
 
-deleteButton?.addEventListener('click', () => {
+deleteButton?.addEventListener('click', async () => {
   if (!selectedAlbumId) return;
 
   const confirmation = window.confirm('Delete this album and all of its photos?');
   if (!confirmation) return;
 
+  const response = await fetch(`/api/albums/${encodeURIComponent(selectedAlbumId)}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    window.alert('The album could not be deleted.');
+    return;
+  }
+
   albums = albums.filter((album) => album.id !== selectedAlbumId);
-  persistAlbums();
 
   if (albums.length === 0) {
     selectedAlbumId = null;
@@ -120,8 +133,21 @@ addMorePhotosInput?.addEventListener('change', async (event) => {
   const files = [...event.target.files || []];
   if (!files.length) return;
 
-  album.photos = [...album.photos, ...(await readFilesAsDataUrls(files))];
-  persistAlbums();
+  const formData = new FormData();
+  files.forEach((file) => formData.append('photos', file));
+
+  const response = await fetch(`/api/albums/${encodeURIComponent(album.id)}/photos`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    window.alert('The photos could not be uploaded.');
+    return;
+  }
+
+  const updatedAlbum = await response.json();
+  albums = albums.map((entry) => entry.id === updatedAlbum.id ? updatedAlbum : entry);
   renderAlbums();
   selectAlbum(album.id);
   addMorePhotosInput.value = '';
@@ -146,6 +172,18 @@ nextPhotoButton?.addEventListener('click', () => {
 });
 
 async function loadAlbums() {
+  try {
+    const response = await fetch('/api/albums', { cache: 'no-store' });
+    if (response.ok) {
+      const parsed = await response.json();
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed;
+      }
+    }
+  } catch (_error) {
+    // Fall back to local/static data when the API is unavailable.
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -301,30 +339,9 @@ function restoreFocusFromHash() {
   selectAlbum(albums[0].id);
 }
 
-function getAlbumShareUrl(albumId, page = 'index.html') {
+function getAlbumShareUrl(albumId) {
   const currentUrl = new URL(window.location.href);
-  const repoBase = (() => {
-    const currentPath = currentUrl.pathname.replace(/\/+$/, '');
-    const segments = currentPath.split('/').filter(Boolean);
-
-    if (segments.length && segments[0] === 'album-studio') {
-      return '/album-studio';
-    }
-
-    if (segments.length && segments.includes('album-studio')) {
-      const idx = segments.indexOf('album-studio');
-      return `/${segments.slice(0, idx + 1).join('/')}`;
-    }
-
-    return '';
-  })();
-
-  const relativePath = page.startsWith('/') ? page : `${repoBase}/${page}`.replace(/\/+/g, '/');
-  const url = new URL(relativePath, currentUrl.origin);
-
-  url.search = `?album=${encodeURIComponent(albumId)}`;
-  url.hash = '';
-  return url.toString();
+  return new URL(`/album/${encodeURIComponent(albumId)}`, currentUrl.origin).toString();
 }
 
 function updateSocialMeta(album) {
@@ -337,7 +354,7 @@ function updateSocialMeta(album) {
   setMetaTag('meta[property="og:title"]', title);
   setMetaTag('meta[property="og:description"]', description);
   setMetaTag('meta[property="og:image"]', firstImage);
-  setMetaTag('meta[property="og:url"]', getAlbumShareUrl(album?.id || '', 'share.html'));
+  setMetaTag('meta[property="og:url"]', getAlbumShareUrl(album?.id || ''));
   setMetaTag('meta[name="twitter:title"]', title);
   setMetaTag('meta[name="twitter:description"]', description);
   setMetaTag('meta[name="twitter:image"]', firstImage);
