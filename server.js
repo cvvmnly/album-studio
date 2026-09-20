@@ -143,8 +143,20 @@ async function invalidateAlbumGif(albumId) {
   }
 }
 
+function getPublicBaseUrl(req) {
+  const configuredUrl = process.env.PUBLIC_URL;
+  const fallbackUrl = `${req.get('host') === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
+  const rawUrl = configuredUrl || fallbackUrl;
+
+  if (req.get('host') !== 'localhost') {
+    return rawUrl.replace(/^http:\/\//i, 'https://').replace(/\/$/, '');
+  }
+
+  return rawUrl.replace(/\/$/, '');
+}
+
 function renderAlbumPage(album, req) {
-  const baseUrl = process.env.PUBLIC_URL || `${req.get('host') === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
+  const baseUrl = getPublicBaseUrl(req);
   const toAbsoluteUrl = (photo) => new URL(photo, `${baseUrl}/`).toString();
   const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
   const photos = album.photos.map(toAbsoluteUrl);
@@ -174,12 +186,12 @@ function renderAlbumPage(album, req) {
     <meta name="twitter:image" content="${previewUrl}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
-      main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
-      .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 16px; padding: 16px; }
-      .main-media { position: relative; width: min(100%, 420px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 14px; overflow: hidden; }
+      main { max-width: 620px; margin: 0 auto; padding: 24px 16px; }
+      .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 12px; padding: 16px; }
+      .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0; background: #020817; border-radius: 12px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
-      .eyebrow { color: #e5e7eb; font-weight: 800; text-align: center; margin: 0 0 4px; }
-      .description { color: #cbd5e1; max-width: 420px; margin: 0 auto 12px; text-align: center; font-size: .82rem; }
+      .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 4px; }
+      .description { color: #cbd5e1; max-width: 520px; margin: 0 0 12px; text-align: left; font-size: .82rem; }
       .controls { position: absolute; inset: 0; pointer-events: none; }
       .controls button { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(15,23,42,.72); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; pointer-events: auto; }
       #previous-photo { left: 12px; }
@@ -298,7 +310,7 @@ app.get('/album/:id/preview.gif', async (req, res) => {
   }
 
   try {
-    const baseUrl = process.env.PUBLIC_URL || `${req.get('host') === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
+    const baseUrl = getPublicBaseUrl(req);
     const gif = await getAlbumGif(album, baseUrl);
     res.type('gif').set('Cache-Control', 'public, max-age=3600').send(gif);
   } catch (error) {
