@@ -3,125 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slideshow Link Generator</title>
+    <title>Dynamic Album Slideshow Generator</title>
 
+    <!-- DYNAMIC DISCORD EMBED LOGIC (Runs serverless via Client-Side parsing) -->
     <script>
-        // Reads data directly out of the link URL when loaded
+        // Parse custom slideshow parameters directly from the URL hash or query string
         const urlParams = new URLSearchParams(window.location.search);
-        const rawData = urlParams.get('album');
-        let albumTitle = "Custom Slideshow";
-        let firstImage = "";
+        const albumDataRaw = urlParams.get('album') || window.location.hash.substring(1);
+        
+        let albumTitle = "Custom Photo Album";
+        let previewImage = "";
 
-        if (rawData) {
+        if (albumDataRaw) {
             try {
-                const parsed = JSON.parse(atob(decodeURIComponent(rawData)));
-                albumTitle = parsed.title || albumTitle;
-                if (parsed.images && parsed.images.length > 0) {
-                    firstImage = parsed.images[0];
+                // Decode the data safely from the link configuration
+                const decodedData = JSON.parse(atob(decodeURIComponent(albumDataRaw)));
+                if (decodedData.title) albumTitle = decodedData.title;
+                if (decodedData.images && decodedData.images.length > 0) {
+                    previewImage = decodedData.images[0];
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.error("Failed to parse album metadata from link index.");
+            }
         }
 
-        // Sets up the tags that Discord looks for when creating the chat preview
+        // Dynamically inject Open Graph tags so Discord reads the specific album data
         document.write(`<meta property="og:title" content="📸 ${albumTitle}" />`);
-        document.write(`<meta property="og:description" content="Click to view the full interactive slideshow!" />`);
-        if (firstImage) {
-            document.write(`<meta property="og:image" content="${firstImage}" />`);
+        document.write(`<meta property="og:description" content="Click to open and view this interactive multi-image slideshow." />`);
+        if (previewImage) {
+            document.write(`<meta property="og:image" content="${previewImage}" />`);
             document.write(`<meta name="twitter:card" content="summary_large_image" />`);
         }
     </script>
 
     <style>
-        body { font-family: sans-serif; background: #2f3136; color: white; padding: 20px; display: flex; justify-content: center; }
-        .box { background: #36393f; padding: 25px; border-radius: 8px; width: 100%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        h1 { margin-top: 0; text-align: center; font-size: 24px; }
-        label { display: block; margin: 15px 0 5px; color: #b9bbbe; font-weight: bold; }
-        input, textarea { width: 100%; padding: 10px; background: #40444b; border: 1px solid #202225; color: white; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #5865f2; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        button:hover { background: #4752c4; }
-        .output { background: #4f545c; padding: 15px; border-radius: 4px; margin-top: 20px; display: none; }
-        .viewer { display: none; text-align: center; }
-        .slide-frame { background: black; height: 350px; display: flex; align-items: center; justify-content: center; position: relative; border-radius: 6px; }
-        .slide-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; padding: 12px; cursor: pointer; font-size: 20px; }
-        .prev { left: 5px; } .next { right: 5px; }
+        :root {
+            --bg-color: #202225;
+            --container-bg: #2f3136;
+            --accent-color: #5865F2;
+            --text-color: #ffffff;
+            --text-muted: #b9bbbe;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: var(--container-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        h1, h2 { margin-top: 0; text-align: center; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; color: var(--text-muted); }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            background: #40444b;
+            border: 1px solid #202225;
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        button:hover { background-color: #4752c4; }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #4f545c;
+            border-radius: 4px;
+            display: none;
+            word-break: break-all;
+        }
+        /* Slideshow Viewer Styles */
+        .viewer-mode { display: none; width: 100%; max-width: 700px; text-align: center; }
+        .slide-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slide-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin: 0;
+        }
+        .prev-btn { left: 10px; }
+        .next-btn { right: 10px; }
+        .counter { margin-top: 10px; color: var(--text-muted); font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <!-- CREATOR MODE: Seen when making an album -->
-    <div id="creator" class="box">
+    <!-- MODE 1: ALBUM CREATOR PANEL -->
+    <div id="creatorPanel" class="container">
         <h1>Slideshow Generator</h1>
-        <label>Album Title</label>
-        <input type="text" id="title" placeholder="My Cool Artwork">
+        <p style="color: var(--text-muted); text-align: center;">Paste image URLs to create a self-contained embed link.</p>
         
-        <label>Image URLs (One link per line)</label>
-        <textarea id="links" rows="6" placeholder="https://site.com"></textarea>
-        
-        <button onclick="makeLink()">Generate Link</button>
-        
-        <div id="outputBox" class="output">
-            <label>Copy this link and paste to Discord:</label>
-            <input type="text" id="finalLink" readonly onclick="this.select()">
+        <label for="albumTitle">Album Title</label>
+        <input type="text" id="albumTitle" placeholder="e.g., My Art Portfolio 2026">
+
+        <label for="imageUrls">Image URLs (One link per line)</label>
+        <textarea id="imageUrls" rows="6" placeholder="https://example.com"></textarea>
+
+        <button onclick="generateAlbumLink()">Generate Custom Link</button>
+
+        <div id="resultBox" class="result-box">
+            <strong style="display:block; margin-bottom: 5px;">Your Discord-Ready URL:</strong>
+            <input type="text" id="generatedUrl" readonly onclick="this.select()">
+            <p style="font-size: 12px; color: #3ba55d; margin: 5px 0 0;">💡 Click inside the box to select all, copy it, and paste directly into Discord!</p>
         </div>
     </div>
 
-    <!-- VIEWER MODE: Seen when opening a generated link -->
-    <div id="viewer" class="box viewer">
-        <h1 id="viewTitle">Loading...</h1>
-        <div class="slide-frame">
-            <button class="nav prev" onclick="move(-1)">❮</button>
-            <img id="slideImg" src="">
-            <button class="nav next" onclick="move(1)">❯</button>
+    <!-- MODE 2: INTERACTIVE SLIDESHOW VIEWER -->
+    <div id="viewerPanel" class="viewer-mode">
+        <h2 id="viewingTitle">Album Loading...</h2>
+        <div class="slide-container">
+            <button class="nav-btn prev-btn" onclick="changeSlide(-1)">❮</button>
+            <img id="currentSlide" src="" alt="Slide Image">
+            <button class="nav-btn next-btn" onclick="changeSlide(1)">❯</button>
         </div>
-        <p id="counter" style="color: #b9bbbe; margin-top: 10px;"></p>
-        <button onclick="window.location.href=window.location.pathname" style="background:#4f545c; max-width: 150px;">Make New</button>
+        <div class="counter" id="slideCounter">Slide 0 of 0</div>
+        <button onclick="window.location.href = window.location.pathname" style="max-width: 200px; margin-top: 30px; font-size: 14px; padding: 8px;">Create New Album</button>
     </div>
 
     <script>
-        let slideImages = [];
-        let index = 0;
+        let currentAlbumImages = [];
+        let currentIndex = 0;
 
-        // Route between builder and viewer
-        if (rawData) {
-            try {
-                const parsed = JSON.parse(atob(decodeURIComponent(rawData)));
-                if (parsed.images && parsed.images.length > 0) {
-                    slideImages = parsed.images;
-                    document.getElementById('viewTitle').innerText = parsed.title || "Slideshow";
-                    document.getElementById('creator').style.display = 'none';
-                    document.getElementById('viewer').style.display = 'block';
-                    renderSlide(0);
+        // Routing Logic: Decide if page shows the Creator or the Slideshow Player
+        window.addEventListener('DOMContentLoaded', () => {
+            if (albumDataRaw) {
+                try {
+                    const decoded = JSON.parse(atob(decodeURIComponent(albumDataRaw)));
+                    if (decoded.images && decoded.images.length > 0) {
+                        currentAlbumImages = decoded.images;
+                        document.getElementById('viewingTitle').innerText = decoded.title || "Custom Slideshow";
+                        document.getElementById('creatorPanel').style.display = 'none';
+                        document.getElementById('viewerPanel').style.display = 'block';
+                        showSlide(0);
+                        return;
+                    }
+                } catch(e) {
+                    alert("Error processing the slideshow link data.");
                 }
-            } catch(e) {}
-        }
+            }
+        });
 
-        // Build the unique link package
-        function makeLink() {
-            const titleVal = document.getElementById('title').value || "Untitled Album";
-            const lines = document.getElementById('links').value.split('\n');
-            const cleanImages = lines.map(l => l.trim()).filter(l => l.length > 0);
-
-            if (cleanImages.length === 0) return alert("Please enter image URLs.");
-
-            const dataStr = btoa(JSON.stringify({ title: titleVal, images: cleanImages }));
-            const outUrl = `${window.location.origin}${window.location.pathname}?album=${encodeURIComponent(dataStr)}`;
+        // Pack inputs together into a single encrypted URL hash string
+        function generateAlbumLink() {
+            const titleInput = document.getElementById('albumTitle').value.trim() || "Untitled Album";
+            const rawLinks = document.getElementById('imageUrls').value.split('\n');
             
-            document.getElementById('finalLink').value = outUrl;
-            document.getElementById('outputBox').style.display = 'block';
+            // Clean up the links array, skipping any empty lines
+            const imageLinks = rawLinks.map(url => url.trim()).filter(url => url.length > 0);
+
+            if (imageLinks.length === 0) {
+                alert("Please add at least one image URL link.");
+                return;
+            }
+
+            const payload = {
+                title: titleInput,
+                images: imageLinks
+            };
+
+            // Convert json payload configuration to an optimized Base64 transfer string
+            const encryptedString = btoa(JSON.stringify(payload));
+            const finalUrl = `${window.location.origin}${window.location.pathname}?album=${encodeURIComponent(encryptedString)}`;
+
+            document.getElementById('generatedUrl').value = finalUrl;
+            document.getElementById('resultBox').style.display = 'block';
         }
 
-        // Display current picture
-        function renderSlide(target) {
-            if (target >= slideImages.length) index = 0;
-            else if (target < 0) index = slideImages.length - 1;
-            else index = target;
+        // Render target image into the viewer template container
+        function showSlide(index) {
+            if (index >= currentAlbumImages.length) currentIndex = 0;
+            else if (index < 0) currentIndex = currentAlbumImages.length - 1;
+            else currentIndex = index;
 
-            document.getElementById('slideImg').src = slideImages[index];
-            document.getElementById('counter').innerText = `Slide ${index + 1} of ${slideImages.length}`;
+            document.getElementById('currentSlide').src = currentAlbumImages[currentIndex];
+            document.getElementById('slideCounter').innerText = `Slide ${currentIndex + 1} of ${currentAlbumImages.length}`;
         }
 
-        function move(dir) { renderSlide(index + dir); }
+        function changeSlide(direction) {
+            showSlide(currentIndex + direction);
+        }
     </script>
 </body>
 </html>
