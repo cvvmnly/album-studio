@@ -346,7 +346,7 @@ function getAlbumShareUrl(albumId) {
 
 function updateSocialMeta(album) {
   const firstImage = album?.photos?.[0] || '';
-  const title = album ? `${album.title} | Album Studio` : 'Album Studio';
+  const title = album ? `${album.title} | @xuan.atic` : '@xuan.atic';
   const description = album?.description || 'Create and share photo albums with a scrollable slideshow.';
 
   document.title = title;
@@ -393,13 +393,13 @@ function setupSharePage() {
   shareDescription.textContent = album.description || 'No description added.';
 
   const firstImage = album.photos[0];
-  document.title = `${album.title} | Album Studio`;
+  document.title = `${album.title} | @xuan.atic`;
 
-  setMetaTag('meta[property="og:title"]', `${album.title} | Album Studio`);
+  setMetaTag('meta[property="og:title"]', `${album.title} | @xuan.atic`);
   setMetaTag('meta[property="og:description"]', album.description || 'Shared photo album');
   setMetaTag('meta[property="og:image"]', firstImage);
   setMetaTag('meta[property="og:url"]', window.location.href);
-  setMetaTag('meta[name="twitter:title"]', `${album.title} | Album Studio`);
+  setMetaTag('meta[name="twitter:title"]', `${album.title} | @xuan.atic`);
   setMetaTag('meta[name="twitter:description"]', album.description || 'Shared photo album');
   setMetaTag('meta[name="twitter:image"]', firstImage);
 

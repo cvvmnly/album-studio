@@ -81,33 +81,38 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '') || 'album';
 }
 
-function renderAlbumPage(album) {
-  const cover = album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80';
+function renderAlbumPage(album, req) {
+  const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const toAbsoluteUrl = (photo) => new URL(photo, `${baseUrl}/`).toString();
+  const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
+  const photos = album.photos.map(toAbsoluteUrl);
   const safeTitle = escapeHtml(album.title);
+  const brandName = '@xuan.atic';
   const safeDescription = escapeHtml(album.description || 'Shared photo album');
-  const publicUrl = `${process.env.PUBLIC_URL || `http://localhost:${PORT}`}/album/${album.id}`;
+  const publicUrl = `${baseUrl}/album/${album.id}`;
 
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${safeTitle} | Album Studio</title>
+    <title>${safeTitle} | ${brandName}</title>
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="${safeTitle} | Album Studio" />
+    <meta property="og:site_name" content="${brandName}" />
+    <meta property="og:title" content="${safeTitle} | ${brandName}" />
     <meta property="og:description" content="${safeDescription}" />
     <meta property="og:image" content="${cover}" />
     <meta property="og:url" content="${publicUrl}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${safeTitle} | Album Studio" />
+    <meta name="twitter:title" content="${safeTitle} | ${brandName}" />
     <meta name="twitter:description" content="${safeDescription}" />
     <meta name="twitter:image" content="${cover}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
       main { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; padding: 20px; }
-      .main-media { background: #020817; border-radius: 18px; overflow: hidden; }
-      .main-media img { width: 100%; height: 70vh; object-fit: contain; display: block; }
+      .main-media { width: min(100%, 820px); aspect-ratio: 1; background: #020817; border-radius: 18px; overflow: hidden; }
+      .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .thumb-row { display: flex; gap: 12px; overflow-x: auto; margin-top: 16px; }
       .thumb-row img { width: 130px; height: 90px; object-fit: cover; border-radius: 12px; border: 2px solid transparent; }
       .title { font-size: clamp(1.8rem, 2vw, 2.5rem); margin: 0 0 8px; }
@@ -126,7 +131,7 @@ function renderAlbumPage(album) {
         </div>
 
         <div class="thumb-row">
-          ${album.photos.map((photo, index) => `<img src="${photo}" alt="${safeTitle} photo ${index + 1}" />`).join('')}
+          ${photos.map((photo, index) => `<img src="${photo}" alt="${safeTitle} photo ${index + 1}" />`).join('')}
         </div>
       </div>
     </main>
@@ -201,7 +206,7 @@ app.get('/album/:id', (req, res) => {
     return res.status(404).send('<h1>Album not found</h1>');
   }
 
-  res.send(renderAlbumPage(album));
+  res.send(renderAlbumPage(album, req));
 });
 
 app.get('/share.html', (_req, res) => {
