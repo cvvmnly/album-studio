@@ -3,38 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 1. HARDCODED DISCORD BOT EMBED FALLBACKS -->
+    <!-- Discord WILL read these because they are normal HTML text, not JavaScript -->
+    <meta property="og:title" content="📸 View My Custom Photo Album Slideshow" />
+    <meta property="og:description" content="Click this link to browse the full interactive slide deck!" />
+    
+    <!-- IMPORTANT: Change this URL to a real placeholder image (like your logo or favorite pic) -->
+    <!-- This is the image that will show up inside Discord chat when you share ANY generated link -->
+    <meta property="og:image" content="https://unsplash.com" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
     <title>Dynamic Album Slideshow Generator</title>
-
-    <!-- DYNAMIC DISCORD EMBED LOGIC (Runs serverless via Client-Side parsing) -->
-    <script>
-        // Parse custom slideshow parameters directly from the URL hash or query string
-        const urlParams = new URLSearchParams(window.location.search);
-        const albumDataRaw = urlParams.get('album') || window.location.hash.substring(1);
-        
-        let albumTitle = "Custom Photo Album";
-        let previewImage = "";
-
-        if (albumDataRaw) {
-            try {
-                // Decode the data safely from the link configuration
-                const decodedData = JSON.parse(atob(decodeURIComponent(albumDataRaw)));
-                if (decodedData.title) albumTitle = decodedData.title;
-                if (decodedData.images && decodedData.images.length > 0) {
-                    previewImage = decodedData.images[0];
-                }
-            } catch (e) {
-                console.error("Failed to parse album metadata from link index.");
-            }
-        }
-
-        // Dynamically inject Open Graph tags so Discord reads the specific album data
-        document.write(`<meta property="og:title" content="📸 ${albumTitle}" />`);
-        document.write(`<meta property="og:description" content="Click to open and view this interactive multi-image slideshow." />`);
-        if (previewImage) {
-            document.write(`<meta property="og:image" content="${previewImage}" />`);
-            document.write(`<meta name="twitter:card" content="summary_large_image" />`);
-        }
-    </script>
 
     <style>
         :root {
@@ -96,7 +76,6 @@
             display: none;
             word-break: break-all;
         }
-        /* Slideshow Viewer Styles */
         .viewer-mode { display: none; width: 100%; max-width: 700px; text-align: center; }
         .slide-container {
             position: relative;
@@ -131,13 +110,13 @@
 </head>
 <body>
 
-    <!-- MODE 1: ALBUM CREATOR PANEL -->
+    <!-- CREATOR MODE -->
     <div id="creatorPanel" class="container">
         <h1>Slideshow Generator</h1>
         <p style="color: var(--text-muted); text-align: center;">Paste image URLs to create a self-contained embed link.</p>
         
         <label for="albumTitle">Album Title</label>
-        <input type="text" id="albumTitle" placeholder="e.g., My Art Portfolio 2026">
+        <input type="text" id="albumTitle" placeholder="e.g., My Art Portfolio">
 
         <label for="imageUrls">Image URLs (One link per line)</label>
         <textarea id="imageUrls" rows="6" placeholder="https://example.com"></textarea>
@@ -147,11 +126,11 @@
         <div id="resultBox" class="result-box">
             <strong style="display:block; margin-bottom: 5px;">Your Discord-Ready URL:</strong>
             <input type="text" id="generatedUrl" readonly onclick="this.select()">
-            <p style="font-size: 12px; color: #3ba55d; margin: 5px 0 0;">💡 Click inside the box to select all, copy it, and paste directly into Discord!</p>
+            <p style="font-size: 12px; color: #3ba55d; margin: 5px 0 0;">💡 Copy this URL and paste it anywhere in Discord!</p>
         </div>
     </div>
 
-    <!-- MODE 2: INTERACTIVE SLIDESHOW VIEWER -->
+    <!-- INTERACTIVE SLIDESHOW VIEWER (Runs for human clicks) -->
     <div id="viewerPanel" class="viewer-mode">
         <h2 id="viewingTitle">Album Loading...</h2>
         <div class="slide-container">
@@ -164,10 +143,13 @@
     </div>
 
     <script>
+        // Real humans visiting the site will trigger this JS to pull their specific custom album images out
+        const urlParams = new URLSearchParams(window.location.search);
+        const albumDataRaw = urlParams.get('album') || window.location.hash.substring(1);
+
         let currentAlbumImages = [];
         let currentIndex = 0;
 
-        // Routing Logic: Decide if page shows the Creator or the Slideshow Player
         window.addEventListener('DOMContentLoaded', () => {
             if (albumDataRaw) {
                 try {
@@ -178,20 +160,16 @@
                         document.getElementById('creatorPanel').style.display = 'none';
                         document.getElementById('viewerPanel').style.display = 'block';
                         showSlide(0);
-                        return;
                     }
                 } catch(e) {
-                    alert("Error processing the slideshow link data.");
+                    console.error("Link processing error.");
                 }
             }
         });
 
-        // Pack inputs together into a single encrypted URL hash string
         function generateAlbumLink() {
             const titleInput = document.getElementById('albumTitle').value.trim() || "Untitled Album";
             const rawLinks = document.getElementById('imageUrls').value.split('\n');
-            
-            // Clean up the links array, skipping any empty lines
             const imageLinks = rawLinks.map(url => url.trim()).filter(url => url.length > 0);
 
             if (imageLinks.length === 0) {
@@ -199,12 +177,7 @@
                 return;
             }
 
-            const payload = {
-                title: titleInput,
-                images: imageLinks
-            };
-
-            // Convert json payload configuration to an optimized Base64 transfer string
+            const payload = { title: titleInput, images: imageLinks };
             const encryptedString = btoa(JSON.stringify(payload));
             const finalUrl = `${window.location.origin}${window.location.pathname}?album=${encodeURIComponent(encryptedString)}`;
 
@@ -212,7 +185,6 @@
             document.getElementById('resultBox').style.display = 'block';
         }
 
-        // Render target image into the viewer template container
         function showSlide(index) {
             if (index >= currentAlbumImages.length) currentIndex = 0;
             else if (index < 0) currentIndex = currentAlbumImages.length - 1;
