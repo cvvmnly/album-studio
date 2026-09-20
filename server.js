@@ -13,10 +13,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const PREVIEWS_DIR = path.join(UPLOADS_DIR, '.previews');
 const ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+fs.mkdirSync(PREVIEWS_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
@@ -121,6 +123,26 @@ async function createAlbumGif(album, baseUrl) {
   return encoder.out.getData();
 }
 
+async function getAlbumGif(album, baseUrl) {
+  const previewPath = path.join(PREVIEWS_DIR, `${album.id}.gif`);
+
+  try {
+    return await fs.promises.readFile(previewPath);
+  } catch (_error) {
+    const gif = await createAlbumGif(album, baseUrl);
+    await fs.promises.writeFile(previewPath, gif);
+    return gif;
+  }
+}
+
+async function invalidateAlbumGif(albumId) {
+  try {
+    await fs.promises.unlink(path.join(PREVIEWS_DIR, `${albumId}.gif`));
+  } catch (_error) {
+    // The preview may not exist yet.
+  }
+}
+
 function renderAlbumPage(album, req) {
   const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
   const toAbsoluteUrl = (photo) => new URL(photo, `${baseUrl}/`).toString();
@@ -143,6 +165,9 @@ function renderAlbumPage(album, req) {
     <meta property="og:title" content="${safeTitle} | ${brandName}" />
     <meta property="og:description" content="${safeDescription}" />
     <meta property="og:image" content="${previewUrl}" />
+    <meta property="og:image:type" content="image/gif" />
+    <meta property="og:image:width" content="1080" />
+    <meta property="og:image:height" content="1350" />
     <meta property="og:url" content="${publicUrl}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${safeTitle} | ${brandName}" />
@@ -156,6 +181,8 @@ function renderAlbumPage(album, req) {
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .thumb-row { display: flex; gap: 12px; overflow-x: auto; margin-top: 16px; }
       .thumb-row img { width: 130px; height: 90px; object-fit: cover; border-radius: 12px; border: 2px solid transparent; }
+      .controls { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
+      .controls button { border: 1px solid #64748b; border-radius: 999px; background: #1e293b; color: #e5e7eb; padding: 10px 18px; cursor: pointer; }
       .title { font-size: clamp(1.8rem, 2vw, 2.5rem); margin: 0 0 8px; }
       .description { color: #cbd5e1; margin-bottom: 16px; }
     </style>
@@ -172,8 +199,24 @@ function renderAlbumPage(album, req) {
         <div class="thumb-row">
           ${photos.map((photo, index) => `<img src="${photo}" alt="${safeTitle} photo ${index + 1}" />`).join('')}
         </div>
+
+        <div class="controls">
+          <button type="button" id="previous-photo">Previous</button>
+          <button type="button" id="next-photo">Next</button>
+        </div>
       </div>
     </main>
+    <script>
+      const photos = ${JSON.stringify(photos).replace(/</g, '\\u003c')};
+      let currentPhoto = 0;
+      const image = document.querySelector('.main-media img');
+      const showPhoto = (index) => {
+        currentPhoto = (index + photos.length) % photos.length;
+        image.src = photos[currentPhoto];
+      };
+      document.getElementById('previous-photo').addEventListener('click', () => showPhoto(currentPhoto - 1));
+      document.getElementById('next-photo').addEventListener('click', () => showPhoto(currentPhoto + 1));
+    </script>
   </body>
 </html>`;
 }
@@ -216,7 +259,7 @@ app.post('/api/albums', upload.array('photos', 25), (req, res) => {
   res.status(201).json(album);
 });
 
-app.post('/api/albums/:id/photos', upload.array('photos', 25), (req, res) => {
+app.post('/api/albums/:id/photos', upload.array('photos', 25), async (req, res) => {
   const albums = readAlbums();
   const album = albums.find((item) => item.id === req.params.id);
 
@@ -227,13 +270,15 @@ app.post('/api/albums/:id/photos', upload.array('photos', 25), (req, res) => {
   const newPhotos = (req.files || []).map((file) => `/uploads/${file.filename}`);
   album.photos = [...album.photos, ...newPhotos];
   writeAlbums(albums);
+  await invalidateAlbumGif(album.id);
   res.json(album);
 });
 
-app.delete('/api/albums/:id', (req, res) => {
+app.delete('/api/albums/:id', async (req, res) => {
   const albums = readAlbums();
   const remaining = albums.filter((item) => item.id !== req.params.id);
   writeAlbums(remaining);
+  await invalidateAlbumGif(req.params.id);
   res.json({ ok: true });
 });
 
@@ -258,7 +303,7 @@ app.get('/album/:id/preview.gif', async (req, res) => {
 
   try {
     const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
-    const gif = await createAlbumGif(album, baseUrl);
+    const gif = await getAlbumGif(album, baseUrl);
     res.type('gif').set('Cache-Control', 'public, max-age=3600').send(gif);
   } catch (error) {
     console.error('Could not generate album preview:', error);
