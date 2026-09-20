@@ -1,0 +1,16 @@
+{
+  "name": "album-studio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "homepage": "https://<your-username>.github.io/album-studio",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "deploy": "npm run build"
+  },
+  "devDependencies": {
+    "vite": "^5.4.10"
+  }
+}

@@ -1,220 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Album Slideshow Grid Generator</title>
-
-    <!-- AUTOMATED DATA EXTRACTION LOGIC -->
-    <script>
-        // Extract the compressed payload directly out of the generated address bar parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const albumDataRaw = urlParams.get('album') || window.location.hash.substring(1);
-        
-        let albumTitle = "Custom Media Album Grid";
-        let capturedImages = [];
-
-        if (albumDataRaw) {
-            try {
-                // Safely decompress the base64 structural image array string back to active URLs
-                const decodedData = JSON.parse(atob(decodeURIComponent(albumDataRaw)));
-                if (decodedData.title) albumTitle = decodedData.title;
-                if (decodedData.images && decodedData.images.length > 0) {
-                    capturedImages = decodedData.images;
-                }
-            } catch (e) {
-                console.error("Failed parsing URL image block array matrix payload.");
-            }
-        }
-
-        // STATIC META TAG WRITERS FOR THE BOT READERS
-        document.write(`<meta property="og:title" content="📸 ${albumTitle}" />`);
-        document.write(`<meta property="og:description" content="Click on an image inside the grid collage to expand the native presentation slide reader view." />`);
-        document.write(`<meta name="twitter:card" content="summary_large_image" />`);
-
-        // INJECT IMAGES DIRECTLY INTO THE PRE-LOAD HEADER 
-        // Discord reads these HTML text writes instantly to construct the multi-image mosaic collage bubble canvas
-        if (capturedImages.length > 0) {
-            // Discord handles up to 4 images inside a single link-embed grid mosaic block
-            const embedLimit = Math.min(capturedImages.length, 4);
-            for (let i = 0; i < embedLimit; i++) {
-                document.write(`<meta property="og:image" content="${capturedImages[i]}" />`);
-            }
-        }
-    </script>
-
-    <style>
-        :root {
-            --bg-color: #202225;
-            --container-bg: #2f3136;
-            --accent-color: #5865F2;
-            --text-color: #ffffff;
-            --text-muted: #b9bbbe;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            background-color: var(--container-bg);
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 600px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-        h1, h2 { margin-top: 0; text-align: center; }
-        label { display: block; margin: 15px 0 5px; font-weight: bold; color: var(--text-muted); }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            background: #40444b;
-            border: 1px solid #202225;
-            color: white;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        button:hover { background-color: #4752c4; }
-        .result-box {
-            margin-top: 20px;
-            padding: 15px;
-            background: #4f545c;
-            border-radius: 4px;
-            display: none;
-            word-break: break-all;
-        }
-        /* Presentation Slide Viewer Window */
-        .viewer-mode { display: none; width: 100%; max-width: 700px; text-align: center; }
-        .slide-container {
-            position: relative;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            height: 450px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .slide-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            padding: 15px;
-            cursor: pointer;
-            font-size: 18px;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            margin: 0;
-        }
-        .prev-btn { left: 10px; }
-        .next-btn { right: 10px; }
-        .counter { margin-top: 10px; color: var(--text-muted); font-size: 14px; }
-    </style>
-</head>
-<body>
-
-    <!-- VISUAL DASHBOARD GENERATOR BOX -->
-    <div id="creatorPanel" class="container">
-        <h1>Slideshow Generator</h1>
-        <p style="color: var(--text-muted); text-align: center;">Paste image URLs to create a mosaic grid link without touching the code!</p>
-        
-        <label for="albumTitle">Album Title</label>
-        <input type="text" id="albumTitle" placeholder="e.g., Project Milestone Presentation">
-
-        <label for="imageUrls">Image URLs (One direct link per line)</label>
-        <textarea id="imageUrls" rows="6" placeholder="https://example.com"></textarea>
-
-        <button onclick="generateAlbumLink()">Generate Embed Link</button>
-
-        <div id="resultBox" class="result-box">
-            <strong style="display:block; margin-bottom: 5px;">Your Discord-Ready Link:</strong>
-            <input type="text" id="generatedUrl" readonly onclick="this.select()">
-            <p style="font-size: 12px; color: #3ba55d; margin: 5px 0 0;">💡 Copy this string link and paste straight into a chat bubble channel window!</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Create and share photo albums with a scrollable slideshow." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Album Studio" />
+    <meta property="og:title" content="Album Studio" />
+    <meta property="og:description" content="Create and share photo albums with a scrollable slideshow." />
+    <meta property="og:image" content="" />
+    <meta property="og:url" content="" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Album Studio" />
+    <meta name="twitter:description" content="Create and share photo albums with a scrollable slideshow." />
+    <meta name="twitter:image" content="" />
+    <title>Album Studio</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <p class="eyebrow">Photo albums</p>
+          <h1>Album Studio</h1>
         </div>
+
+        <form id="album-form" class="album-form">
+          <label>
+            <span>Album title</span>
+            <input id="album-title" name="title" type="text" maxlength="80" placeholder="Summer trip" required />
+          </label>
+
+          <label>
+            <span>Album description</span>
+            <textarea id="album-description" name="description" rows="3" maxlength="220" placeholder="Add a short caption..."></textarea>
+          </label>
+
+          <label class="file-label">
+            <span>Choose photos</span>
+            <input id="album-photos" type="file" accept="image/*" multiple />
+          </label>
+
+          <button type="submit" class="primary-btn">Create album</button>
+        </form>
+
+        <div class="albums-panel">
+          <div class="panel-header">
+            <h2>Your albums</h2>
+          </div>
+          <ul id="album-list" class="album-list"></ul>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <div id="empty-state" class="empty-state hidden">
+          <h2>No album selected</h2>
+          <p>Create a new album and upload photos to start building your slideshow.</p>
+        </div>
+
+        <section id="album-view" class="album-view hidden">
+          <div class="viewer-header">
+            <div>
+              <p id="album-kicker" class="eyebrow">Album</p>
+              <h2 id="album-name">Album name</h2>
+            </div>
+
+            <div class="header-actions">
+              <button id="share-btn" class="secondary-btn">Copy share link</button>
+              <button id="delete-btn" class="danger-btn">Delete album</button>
+            </div>
+          </div>
+
+          <p id="album-description-display" class="album-description"></p>
+
+          <div class="upload-strip">
+            <label class="secondary-btn upload-btn">
+              <input id="add-more-photos" type="file" accept="image/*" multiple />
+              Add photos
+            </label>
+          </div>
+
+          <div class="slideshow">
+            <div class="main-media">
+              <button id="prev-photo" class="nav-btn" aria-label="Previous image">‹</button>
+              <img id="main-image" src="" alt="Selected album photo" />
+              <button id="next-photo" class="nav-btn" aria-label="Next image">›</button>
+            </div>
+
+            <div class="thumb-strip-wrapper">
+              <div id="thumb-strip" class="thumb-strip" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <!-- VISITOR PRESENTATION INTERACTION LAYOUT -->
-    <div id="viewerPanel" class="viewer-mode">
-        <h2 id="viewingTitle">Album Loading...</h2>
-        <div class="slide-container">
-            <button class="nav-btn prev-btn" onclick="changeSlide(-1)">❮</button>
-            <img id="currentSlide" src="" alt="Slide Image">
-            <button class="nav-btn next-btn" onclick="changeSlide(1)">❯</button>
-        </div>
-        <div class="counter" id="slideCounter">Slide 0 of 0</div>
-        <button onclick="window.location.href = window.location.pathname" style="max-width: 200px; margin-top: 30px; font-size: 14px; padding: 8px;">Create New Album</button>
-    </div>
+    <template id="album-item-template">
+      <li class="album-item">
+        <button type="button" class="album-item-button">
+          <span class="album-item-name"></span>
+          <span class="album-item-meta"></span>
+        </button>
+      </li>
+    </template>
 
-    <script>
-        let interactiveImages = [];
-        let currentIndex = 0;
-
-        // Routing engine layout selector split rule
-        window.addEventListener('DOMContentLoaded', () => {
-            if (capturedImages.length > 0) {
-                interactiveImages = capturedImages;
-                document.getElementById('viewingTitle').innerText = albumTitle;
-                document.getElementById('creatorPanel').style.display = 'none';
-                document.getElementById('viewerPanel').style.display = 'block';
-                showSlide(0);
-            }
-        });
-
-        function generateAlbumLink() {
-            const titleInput = document.getElementById('albumTitle').value.trim() || "Untitled Album";
-            const rawLinks = document.getElementById('imageUrls').value.split('\n');
-            const imageLinks = rawLinks.map(url => url.trim()).filter(url => url.length > 0);
-
-            if (imageLinks.length === 0) {
-                alert("Please paste at least one direct picture link into the textbox input canvas area.");
-                return;
-            }
-
-            const payload = { title: titleInput, images: imageLinks };
-            const encryptedString = btoa(JSON.stringify(payload));
-            const finalUrl = `${window.location.origin}${window.location.pathname}?album=${encodeURIComponent(encryptedString)}`;
-
-            document.getElementById('generatedUrl').value = finalUrl;
-            document.getElementById('resultBox').style.display = 'block';
-        }
-
-        function showSlide(index) {
-            if (index >= interactiveImages.length) currentIndex = 0;
-            else if (index < 0) currentIndex = interactiveImages.length - 1;
-            else currentIndex = index;
-
-            document.getElementById('currentSlide').src = interactiveImages[currentIndex];
-            document.getElementById('slideCounter').innerText = `Slide ${currentIndex + 1} of ${interactiveImages.length}`;
-        }
-
-        function changeSlide(direction) {
-            showSlide(currentIndex + direction);
-        }
-    </script>
-</body>
+    <script type="module" src="script.js"></script>
+  </body>
 </html>
