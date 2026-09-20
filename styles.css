@@ -283,7 +283,7 @@ textarea:focus {
   display: grid;
   place-items: center;
   width: min(100%, 820px);
-  aspect-ratio: 1;
+  aspect-ratio: 4 / 5;
   min-height: 0;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid var(--line);

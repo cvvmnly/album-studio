@@ -1,5 +1,7 @@
 import express from 'express';
 import multer from 'multer';
+import GIFEncoder from 'gif-encoder-2';
+import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -81,11 +83,50 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '') || 'album';
 }
 
+async function readPhotoBuffer(photo, baseUrl) {
+  if (photo.startsWith('/')) {
+    return fs.promises.readFile(path.join(__dirname, photo.replace(/^\/+/, '')));
+  }
+
+  const response = await fetch(new URL(photo, `${baseUrl}/`));
+  if (!response.ok) {
+    throw new Error(`Could not fetch photo: ${response.status}`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function createAlbumGif(album, baseUrl) {
+  const width = 1080;
+  const height = 1350;
+  const encoder = new GIFEncoder(width, height, 'neuquant', true, album.photos.length);
+  encoder.start();
+  encoder.setRepeat(0);
+  encoder.setDelay(1800);
+  encoder.setQuality(10);
+
+  for (const photo of album.photos.slice(0, 20)) {
+    const { data } = await sharp(await readPhotoBuffer(photo, baseUrl))
+      .resize(width, height, { fit: 'cover', position: 'centre' })
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    encoder.addFrame({
+      getImageData: () => ({ data }),
+    });
+  }
+
+  encoder.finish();
+  return encoder.out.getData();
+}
+
 function renderAlbumPage(album, req) {
   const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
   const toAbsoluteUrl = (photo) => new URL(photo, `${baseUrl}/`).toString();
   const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
   const photos = album.photos.map(toAbsoluteUrl);
+  const previewUrl = `${baseUrl}/album/${album.id}/preview.gif`;
   const safeTitle = escapeHtml(album.title);
   const brandName = '@xuan.atic';
   const safeDescription = escapeHtml(album.description || 'Shared photo album');
@@ -101,17 +142,17 @@ function renderAlbumPage(album, req) {
     <meta property="og:site_name" content="${brandName}" />
     <meta property="og:title" content="${safeTitle} | ${brandName}" />
     <meta property="og:description" content="${safeDescription}" />
-    <meta property="og:image" content="${cover}" />
+    <meta property="og:image" content="${previewUrl}" />
     <meta property="og:url" content="${publicUrl}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${safeTitle} | ${brandName}" />
     <meta name="twitter:description" content="${safeDescription}" />
-    <meta name="twitter:image" content="${cover}" />
+    <meta name="twitter:image" content="${previewUrl}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
       main { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; padding: 20px; }
-      .main-media { width: min(100%, 820px); aspect-ratio: 1; background: #020817; border-radius: 18px; overflow: hidden; }
+      .main-media { width: min(100%, 820px); aspect-ratio: 4 / 5; background: #020817; border-radius: 18px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .thumb-row { display: flex; gap: 12px; overflow-x: auto; margin-top: 16px; }
       .thumb-row img { width: 130px; height: 90px; object-fit: cover; border-radius: 12px; border: 2px solid transparent; }
@@ -122,9 +163,7 @@ function renderAlbumPage(album, req) {
   <body>
     <main>
       <div class="album-shell">
-        <p style="color:#60a5fa; text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; margin-bottom: 8px;">Shared album</p>
         <h1 class="title">${safeTitle}</h1>
-        <p class="description">${safeDescription}</p>
 
         <div class="main-media">
           <img src="${cover}" alt="${safeTitle}" />
@@ -207,6 +246,24 @@ app.get('/album/:id', (req, res) => {
   }
 
   res.send(renderAlbumPage(album, req));
+});
+
+app.get('/album/:id/preview.gif', async (req, res) => {
+  const albums = ensureSeedAlbum();
+  const album = albums.find((item) => item.id === req.params.id);
+
+  if (!album || !album.photos.length) {
+    return res.status(404).end();
+  }
+
+  try {
+    const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+    const gif = await createAlbumGif(album, baseUrl);
+    res.type('gif').set('Cache-Control', 'public, max-age=3600').send(gif);
+  } catch (error) {
+    console.error('Could not generate album preview:', error);
+    res.status(500).end();
+  }
 });
 
 app.get('/share.html', (_req, res) => {

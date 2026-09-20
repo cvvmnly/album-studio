@@ -266,9 +266,9 @@ function selectAlbum(albumId) {
   emptyState.classList.add('hidden');
   albumView.classList.remove('hidden');
 
-  albumKicker.textContent = 'Album';
+  albumKicker.textContent = '';
   albumNameNode.textContent = album.title;
-  albumDescriptionDisplay.textContent = album.description || 'No description added.';
+  albumDescriptionDisplay.textContent = '';
 
   if (!album.photos.length) {
     mainImage.src = '';
@@ -390,7 +390,9 @@ function setupSharePage() {
   }
 
   shareTitle.textContent = album.title;
-  shareDescription.textContent = album.description || 'No description added.';
+  if (shareDescription) {
+    shareDescription.textContent = '';
+  }
 
   const firstImage = album.photos[0];
   document.title = `${album.title} | @xuan.atic`;
