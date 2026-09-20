@@ -190,10 +190,11 @@ function renderAlbumPage(album, req) {
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
       main { max-width: 620px; margin: 0 auto; padding: 24px 16px; }
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 12px; padding: 16px; }
-      .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 12px; overflow: hidden; }
+      .post-column { width: min(100%, 520px); margin: 0 auto; }
+      .main-media { position: relative; width: 100%; aspect-ratio: 4 / 5; margin: 0; background: #020817; border-radius: 12px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 10px; }
-      .top-handle { width: min(100%, 520px); margin: 0 auto 10px; }
+      .top-handle { margin: 0 0 10px; }
       .post-text { width: min(100%, 520px); margin: 12px auto 0; }
       .date { color: #94a3b8; font-size: .76rem; margin: 0 0 5px; }
       .description { color: #cbd5e1; margin: 0; text-align: left; font-size: .82rem; }
@@ -206,20 +207,22 @@ function renderAlbumPage(album, req) {
   <body>
     <main>
       <div class="album-shell">
-        <p class="eyebrow top-handle">${brandName}</p>
+        <div class="post-column">
+          <p class="eyebrow top-handle">${brandName}</p>
 
-        <div class="main-media">
-          <img src="${cover}" alt="${safeTitle}" />
-          <div class="controls">
-            <button type="button" id="previous-photo" aria-label="Previous photo">&#8249;</button>
-            <button type="button" id="next-photo" aria-label="Next photo">&#8250;</button>
+          <div class="main-media">
+            <img src="${cover}" alt="${safeTitle}" />
+            <div class="controls">
+              <button type="button" id="previous-photo" aria-label="Previous photo">&#8249;</button>
+              <button type="button" id="next-photo" aria-label="Next photo">&#8250;</button>
+            </div>
           </div>
-        </div>
 
-        <div class="post-text">
-          <p class="eyebrow">${brandName}</p>
-          <p class="description">${safeDescription}</p>
-          <p class="date">${displayDate}</p>
+          <div class="post-text">
+            <p class="eyebrow">${brandName}</p>
+            <p class="description">${safeDescription}</p>
+            <p class="date">${displayDate}</p>
+          </div>
         </div>
 
       </div>
