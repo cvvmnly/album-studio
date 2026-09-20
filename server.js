@@ -161,7 +161,6 @@ function renderAlbumPage(album, req) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${brandName}</title>
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="${brandName}" />
     <meta property="og:title" content="${brandName}" />
     <meta property="og:description" content="${safeDescription}" />
     <meta property="og:image" content="${previewUrl}" />
@@ -175,17 +174,16 @@ function renderAlbumPage(album, req) {
     <meta name="twitter:image" content="${previewUrl}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
-      main { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
-      .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; padding: 20px; }
-      .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 18px; overflow: hidden; }
+      main { max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+      .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 16px; padding: 16px; }
+      .main-media { position: relative; width: min(100%, 420px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 14px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
-      .description { color: #cbd5e1; max-width: 520px; margin: 0 auto 16px; }
+      .eyebrow { color: #e5e7eb; font-weight: 800; text-align: center; margin: 0 0 4px; }
+      .description { color: #cbd5e1; max-width: 420px; margin: 0 auto 12px; text-align: center; font-size: .82rem; }
       .controls { position: absolute; inset: 0; pointer-events: none; }
       .controls button { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(15,23,42,.72); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; pointer-events: auto; }
       #previous-photo { left: 12px; }
       #next-photo { right: 12px; }
-      .title { font-size: clamp(1.8rem, 2vw, 2.5rem); margin: 0 0 8px; }
-      .description { color: #cbd5e1; margin-bottom: 16px; }
     </style>
   </head>
   <body>
