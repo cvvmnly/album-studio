@@ -266,9 +266,9 @@ function selectAlbum(albumId) {
   emptyState.classList.add('hidden');
   albumView.classList.remove('hidden');
 
-  albumKicker.textContent = '';
-  albumNameNode.textContent = album.title;
-  albumDescriptionDisplay.textContent = '';
+  albumKicker.textContent = '@xuan.atic';
+  albumNameNode.textContent = '@xuan.atic';
+  albumDescriptionDisplay.textContent = album.description || '';
 
   if (!album.photos.length) {
     mainImage.src = '';

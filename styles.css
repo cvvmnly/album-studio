@@ -282,7 +282,7 @@ textarea:focus {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 820px);
+  width: min(100%, 520px);
   aspect-ratio: 4 / 5;
   min-height: 0;
   background: rgba(15, 23, 42, 0.9);
@@ -322,8 +322,7 @@ textarea:focus {
 }
 
 .thumb-strip-wrapper {
-  overflow-x: auto;
-  padding-bottom: 4px;
+  display: none;
 }
 
 .thumb-strip {

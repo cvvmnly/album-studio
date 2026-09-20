@@ -148,8 +148,8 @@ function renderAlbumPage(album, req) {
   const toAbsoluteUrl = (photo) => new URL(photo, `${baseUrl}/`).toString();
   const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
   const photos = album.photos.map(toAbsoluteUrl);
-  const previewUrl = `${baseUrl}/album/${album.id}/preview.gif`;
   const safeTitle = escapeHtml(album.title);
+  const previewUrl = `${baseUrl}/album/${album.id}/preview.gif`;
   const brandName = '@xuan.atic';
   const safeDescription = escapeHtml(album.description || 'Shared photo album');
   const publicUrl = `${baseUrl}/album/${album.id}`;
@@ -159,10 +159,10 @@ function renderAlbumPage(album, req) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${safeTitle} | ${brandName}</title>
+    <title>${brandName}</title>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="${brandName}" />
-    <meta property="og:title" content="${safeTitle} | ${brandName}" />
+    <meta property="og:title" content="${brandName}" />
     <meta property="og:description" content="${safeDescription}" />
     <meta property="og:image" content="${previewUrl}" />
     <meta property="og:image:type" content="image/gif" />
@@ -170,17 +170,16 @@ function renderAlbumPage(album, req) {
     <meta property="og:image:height" content="1350" />
     <meta property="og:url" content="${publicUrl}" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${safeTitle} | ${brandName}" />
+    <meta name="twitter:title" content="${brandName}" />
     <meta name="twitter:description" content="${safeDescription}" />
     <meta name="twitter:image" content="${previewUrl}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
       main { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; padding: 20px; }
-      .main-media { position: relative; width: min(100%, 640px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 18px; overflow: hidden; }
+      .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 18px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
-      .thumb-row { display: flex; gap: 12px; overflow-x: auto; margin-top: 16px; }
-      .thumb-row img { width: 130px; height: 90px; object-fit: cover; border-radius: 12px; border: 2px solid transparent; }
+      .description { color: #cbd5e1; max-width: 520px; margin: 0 auto 16px; }
       .controls { position: absolute; inset: 0; pointer-events: none; }
       .controls button { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(15,23,42,.72); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; pointer-events: auto; }
       #previous-photo { left: 12px; }
@@ -192,7 +191,8 @@ function renderAlbumPage(album, req) {
   <body>
     <main>
       <div class="album-shell">
-        <h1 class="title">${safeTitle}</h1>
+        <p class="eyebrow">${brandName}</p>
+        <p class="description">${safeDescription}</p>
 
         <div class="main-media">
           <img src="${cover}" alt="${safeTitle}" />
@@ -202,9 +202,6 @@ function renderAlbumPage(album, req) {
           </div>
         </div>
 
-        <div class="thumb-row">
-          ${photos.map((photo, index) => `<img src="${photo}" alt="${safeTitle} photo ${index + 1}" />`).join('')}
-        </div>
       </div>
     </main>
     <script>
