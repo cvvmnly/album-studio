@@ -27,14 +27,24 @@ const shareNextButton = document.getElementById('share-next');
 const sharePageContainer = document.getElementById('share-page-container');
 const shareEmpty = document.getElementById('share-empty');
 
-let albums = loadAlbums();
+let albums = [];
 let selectedAlbumId = null;
 let activePhotoIndex = 0;
 
-seedDefaultAlbums();
-renderAlbums();
-restoreFocusFromHash();
-setupSharePage();
+initializeApp();
+
+async function initializeApp() {
+  albums = await loadAlbums();
+
+  if (!albums.length) {
+    albums = getDefaultAlbums();
+    persistAlbums();
+  }
+
+  renderAlbums();
+  restoreFocusFromHash();
+  setupSharePage();
+}
 
 albumForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -135,17 +145,40 @@ nextPhotoButton.addEventListener('click', () => {
   renderActivePhoto();
 });
 
-function loadAlbums() {
+async function loadAlbums() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (error) {
-    return [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed;
+      }
+    }
+  } catch (_error) {
+    // Ignore invalid local cache and fall back to public album JSON.
   }
+
+  try {
+    const response = await fetch('/data/albums.json', { cache: 'no-store' });
+    if (!response.ok) return [];
+
+    const parsed = await response.json();
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch (_error) {
+    // Public album data may not exist in a static local preview.
+  }
+
+  return [];
 }
 
 function persistAlbums() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(albums));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(albums));
+  } catch (_error) {
+    // Ignore storage errors in private browsing or restricted contexts.
+  }
 }
 
 function renderAlbums() {
@@ -393,10 +426,8 @@ function createSlug(value) {
     .replace(/^-+|-+$/g, '') || 'album';
 }
 
-function seedDefaultAlbums() {
-  if (albums.length) return;
-
-  albums = [
+function getDefaultAlbums() {
+  return [
     {
       id: 'sample-summer-trip',
       title: 'Summer trip',
@@ -409,6 +440,12 @@ function seedDefaultAlbums() {
       createdAt: Date.now(),
     },
   ];
+}
+
+function seedDefaultAlbums() {
+  if (albums.length) return;
+
+  albums = getDefaultAlbums();
   persistAlbums();
   selectedAlbumId = albums[0].id;
 }

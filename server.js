@@ -137,6 +137,7 @@ function renderAlbumPage(album) {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/data', express.static(DATA_DIR));
 app.use(express.static(__dirname));
 
 app.get('/api/albums', (_req, res) => {
