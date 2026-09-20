@@ -220,10 +220,10 @@ textarea:focus {
 
 .album-view,
 .empty-state {
-  width: min(100%, 620px);
+  width: min(100%, 540px);
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: var(--shadow);
   padding: 16px;
 }
@@ -277,6 +277,21 @@ textarea:focus {
   font-size: 0.82rem;
 }
 
+.album-caption-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.album-caption-line strong {
+  color: var(--text);
+  flex: 0 0 auto;
+}
+
 .album-date-display {
   color: var(--muted);
   margin: 0 0 4px;
@@ -307,13 +322,13 @@ textarea:focus {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 520px);
+  width: min(100%, 440px);
   aspect-ratio: 4 / 5;
   margin-inline: auto;
   min-height: 0;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 0;
   overflow: hidden;
 }
 

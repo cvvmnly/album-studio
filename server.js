@@ -188,16 +188,17 @@ function renderAlbumPage(album, req) {
     <meta name="twitter:image" content="${previewUrl}" />
     <style>
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
-      main { max-width: 620px; margin: 0 auto; padding: 24px 16px; }
-      .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 12px; padding: 16px; }
-      .post-column { width: min(100%, 520px); margin: 0 auto; }
-      .main-media { position: relative; width: 100%; aspect-ratio: 4 / 5; margin: 0; background: #020817; border-radius: 12px; overflow: hidden; }
+      main { max-width: 540px; margin: 0 auto; padding: 16px 12px; }
+      .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 8px; padding: 10px; }
+      .post-column { width: min(100%, 440px); margin: 0 auto; }
+      .main-media { position: relative; width: 100%; aspect-ratio: 4 / 5; margin: 0; background: #020817; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 10px; }
       .top-handle { margin: 0 0 10px; }
-      .post-text { width: min(100%, 520px); margin: 12px auto 0; }
-      .date { color: #94a3b8; font-size: .76rem; margin: 0 0 5px; }
-      .description { color: #cbd5e1; margin: 0; text-align: left; font-size: .82rem; }
+      .post-text { display: flex; align-items: baseline; gap: 10px; width: 100%; margin: 10px 0 0; }
+      .post-text .eyebrow { margin: 0; flex: 0 0 auto; }
+      .date { color: #94a3b8; font-size: .7rem; margin: 0 0 0 auto; }
+      .description { color: #cbd5e1; margin: 0; text-align: left; font-size: .78rem; min-width: 0; overflow-wrap: anywhere; }
       .controls { position: absolute; inset: 0; pointer-events: none; }
       .controls button { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(15,23,42,.72); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; pointer-events: auto; }
       #previous-photo { left: 12px; }
