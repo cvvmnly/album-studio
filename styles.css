@@ -298,6 +298,7 @@ textarea:focus {
   place-items: center;
   width: min(100%, 520px);
   aspect-ratio: 4 / 5;
+  margin-inline: auto;
   min-height: 0;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid var(--line);

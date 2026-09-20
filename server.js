@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const PREVIEWS_DIR = path.join(UPLOADS_DIR, '.previews');
+const PREVIEW_VERSION = 'v2';
 const ALBUMS_FILE = path.join(DATA_DIR, 'albums.json');
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -99,8 +100,8 @@ async function readPhotoBuffer(photo, baseUrl) {
 }
 
 async function createAlbumGif(album, baseUrl) {
-  const width = 1080;
-  const height = 1350;
+  const width = 540;
+  const height = 675;
   const encoder = new GIFEncoder(width, height, 'neuquant', true, album.photos.length);
   encoder.start();
   encoder.setRepeat(0);
@@ -124,7 +125,7 @@ async function createAlbumGif(album, baseUrl) {
 }
 
 async function getAlbumGif(album, baseUrl) {
-  const previewPath = path.join(PREVIEWS_DIR, `${album.id}.gif`);
+  const previewPath = path.join(PREVIEWS_DIR, `${album.id}-${PREVIEW_VERSION}.gif`);
 
   try {
     return await fs.promises.readFile(previewPath);
@@ -137,7 +138,7 @@ async function getAlbumGif(album, baseUrl) {
 
 async function invalidateAlbumGif(albumId) {
   try {
-    await fs.promises.unlink(path.join(PREVIEWS_DIR, `${albumId}.gif`));
+    await fs.promises.unlink(path.join(PREVIEWS_DIR, `${albumId}-${PREVIEW_VERSION}.gif`));
   } catch (_error) {
     // The preview may not exist yet.
   }
@@ -177,8 +178,8 @@ function renderAlbumPage(album, req) {
     <meta property="og:description" content="${safeDescription}" />
     <meta property="og:image" content="${previewUrl}" />
     <meta property="og:image:type" content="image/gif" />
-    <meta property="og:image:width" content="1080" />
-    <meta property="og:image:height" content="1350" />
+    <meta property="og:image:width" content="540" />
+    <meta property="og:image:height" content="675" />
     <meta property="og:url" content="${publicUrl}" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${brandName}" />
@@ -188,7 +189,7 @@ function renderAlbumPage(album, req) {
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
       main { max-width: 620px; margin: 0 auto; padding: 24px 16px; }
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 12px; padding: 16px; }
-      .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0; background: #020817; border-radius: 12px; overflow: hidden; }
+      .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 12px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 4px; }
       .description { color: #cbd5e1; max-width: 520px; margin: 0 0 12px; text-align: left; font-size: .82rem; }
