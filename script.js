@@ -2,6 +2,7 @@ const STORAGE_KEY = 'album-studio-data';
 const albumForm = document.getElementById('album-form');
 const albumTitleInput = document.getElementById('album-title');
 const albumDescriptionInput = document.getElementById('album-description');
+const albumDateInput = document.getElementById('album-date');
 const albumPhotosInput = document.getElementById('album-photos');
 const addMorePhotosInput = document.getElementById('add-more-photos');
 const albumList = document.getElementById('album-list');
@@ -10,6 +11,7 @@ const emptyState = document.getElementById('empty-state');
 const albumView = document.getElementById('album-view');
 const albumNameNode = document.getElementById('album-name');
 const albumDescriptionDisplay = document.getElementById('album-description-display');
+const albumDateDisplay = document.getElementById('album-date-display');
 const albumKicker = document.getElementById('album-kicker');
 const shareButton = document.getElementById('share-btn');
 const deleteButton = document.getElementById('delete-btn');
@@ -51,6 +53,7 @@ albumForm?.addEventListener('submit', async (event) => {
 
   const title = albumTitleInput.value.trim();
   const description = albumDescriptionInput.value.trim();
+  const date = albumDateInput.value;
   const files = [...albumPhotosInput.files || []];
 
   if (!title) {
@@ -61,6 +64,7 @@ albumForm?.addEventListener('submit', async (event) => {
   const formData = new FormData();
   formData.append('title', title);
   formData.append('description', description);
+  if (date) formData.append('date', date);
   files.forEach((file) => formData.append('photos', file));
 
   const response = await fetch('/api/albums', {
@@ -268,7 +272,12 @@ function selectAlbum(albumId) {
 
   albumKicker.textContent = '@xuan.atic';
   albumNameNode.textContent = '@xuan.atic';
-  albumDescriptionDisplay.textContent = album.description || '';
+  if (albumDateDisplay) {
+    albumDateDisplay.textContent = formatAlbumDate(album.date);
+  }
+  if (albumDescriptionDisplay) {
+    albumDescriptionDisplay.textContent = album.description || '';
+  }
 
   if (!album.photos.length) {
     mainImage.src = '';
@@ -278,6 +287,13 @@ function selectAlbum(albumId) {
   }
 
   renderActivePhoto();
+}
+
+function formatAlbumDate(value) {
+  if (!value) return '█ / █ / 2006';
+
+  const [year, month, day] = value.split('-');
+  return `${month} / ${day} / ${year}`;
 }
 
 function renderActivePhoto() {
@@ -341,7 +357,9 @@ function restoreFocusFromHash() {
 
 function getAlbumShareUrl(albumId) {
   const currentUrl = new URL(window.location.href);
-  return new URL(`/album/${encodeURIComponent(albumId)}`, currentUrl.origin).toString();
+  const url = new URL(`/album/${encodeURIComponent(albumId)}`, currentUrl.origin);
+  url.searchParams.set('v', Date.now().toString());
+  return url.toString();
 }
 
 function updateSocialMeta(album) {

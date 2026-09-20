@@ -36,6 +36,11 @@
             <textarea id="album-description" name="description" rows="3" maxlength="220" placeholder="Add a short caption..."></textarea>
           </label>
 
+          <label>
+            <span>Date</span>
+            <input id="album-date" name="date" type="date" />
+          </label>
+
           <label class="file-label">
             <span>Choose photos</span>
             <input id="album-photos" type="file" accept="image/*" multiple />
@@ -59,6 +64,18 @@
         </div>
 
         <section id="album-view" class="album-view hidden">
+          <div class="slideshow">
+            <div class="main-media">
+              <button id="prev-photo" class="nav-btn" aria-label="Previous image">‹</button>
+              <img id="main-image" src="" alt="Selected album photo" />
+              <button id="next-photo" class="nav-btn" aria-label="Next image">›</button>
+            </div>
+
+            <div class="thumb-strip-wrapper">
+              <div id="thumb-strip" class="thumb-strip" aria-live="polite"></div>
+            </div>
+          </div>
+
           <div class="viewer-header">
             <div>
               <p id="album-kicker" class="eyebrow">@xuan.atic</p>
@@ -71,6 +88,7 @@
             </div>
           </div>
 
+          <p id="album-date-display" class="album-date-display"></p>
           <p id="album-description-display" class="album-description"></p>
 
           <div class="upload-strip">
@@ -80,17 +98,6 @@
             </label>
           </div>
 
-          <div class="slideshow">
-            <div class="main-media">
-              <button id="prev-photo" class="nav-btn" aria-label="Previous image">‹</button>
-              <img id="main-image" src="" alt="Selected album photo" />
-              <button id="next-photo" class="nav-btn" aria-label="Next image">›</button>
-            </div>
-
-            <div class="thumb-strip-wrapper">
-              <div id="thumb-strip" class="thumb-strip" aria-live="polite"></div>
-            </div>
-          </div>
         </section>
       </main>
     </div>

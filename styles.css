@@ -276,6 +276,13 @@ textarea:focus {
   font-size: 0.82rem;
 }
 
+.album-date-display {
+  color: var(--muted);
+  margin: 0 0 4px;
+  font-size: 0.76rem;
+  text-align: left;
+}
+
 .upload-strip {
   margin-bottom: 18px;
 }

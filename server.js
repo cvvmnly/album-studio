@@ -162,9 +162,11 @@ function renderAlbumPage(album, req) {
   const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
   const photos = album.photos.map(toAbsoluteUrl);
   const safeTitle = escapeHtml(album.title);
-  const previewUrl = `${baseUrl}/album/${album.id}/preview.gif`;
+  const previewVersion = album.updatedAt || album.createdAt || Date.now();
+  const previewUrl = `${baseUrl}/album/${album.id}/preview.gif?v=${previewVersion}`;
   const brandName = '@xuan.atic';
   const safeDescription = escapeHtml(album.description || 'Shared photo album');
+  const displayDate = album.date ? escapeHtml(album.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$2 / $3 / $1')) : '█ / █ / 2006';
   const publicUrl = `${baseUrl}/album/${album.id}`;
 
   return `<!doctype html>
@@ -192,7 +194,9 @@ function renderAlbumPage(album, req) {
       .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 12px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 4px; }
-      .description { color: #cbd5e1; max-width: 520px; margin: 0 0 12px; text-align: left; font-size: .82rem; }
+      .post-text { width: min(100%, 520px); margin: 12px auto 0; }
+      .date { color: #94a3b8; font-size: .76rem; margin: 0 0 5px; }
+      .description { color: #cbd5e1; margin: 0; text-align: left; font-size: .82rem; }
       .controls { position: absolute; inset: 0; pointer-events: none; }
       .controls button { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(15,23,42,.72); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; pointer-events: auto; }
       #previous-photo { left: 12px; }
@@ -202,15 +206,18 @@ function renderAlbumPage(album, req) {
   <body>
     <main>
       <div class="album-shell">
-        <p class="eyebrow">${brandName}</p>
-        <p class="description">${safeDescription}</p>
-
         <div class="main-media">
           <img src="${cover}" alt="${safeTitle}" />
           <div class="controls">
             <button type="button" id="previous-photo" aria-label="Previous photo">&#8249;</button>
             <button type="button" id="next-photo" aria-label="Next photo">&#8250;</button>
           </div>
+        </div>
+
+        <div class="post-text">
+          <p class="eyebrow">${brandName}</p>
+          <p class="date">${displayDate}</p>
+          <p class="description">${safeDescription}</p>
         </div>
 
       </div>
@@ -253,6 +260,7 @@ app.post('/api/albums', upload.array('photos', 25), (req, res) => {
     id: slugify(title),
     title: title.trim(),
     description: description ? description.trim() : '',
+    date: req.body.date || '',
     photos,
     createdAt: Date.now(),
   };
@@ -278,6 +286,7 @@ app.post('/api/albums/:id/photos', upload.array('photos', 25), async (req, res) 
 
   const newPhotos = (req.files || []).map((file) => `/uploads/${file.filename}`);
   album.photos = [...album.photos, ...newPhotos];
+  album.updatedAt = Date.now();
   writeAlbums(albums);
   await invalidateAlbumGif(album.id);
   res.json(album);
