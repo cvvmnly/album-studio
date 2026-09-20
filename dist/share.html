@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Shareable album slideshow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Album Studio" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Album Share</title>
+    <script type="module" crossorigin src="./assets/script-DfBuE9hz.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/script-B0s2tZ03.css">
+  </head>
+  <body data-page="share">
+    <main class="share-page-shell">
+      <section class="share-card hidden" id="share-page-container">
+        <div class="viewer-header">
+          <div>
+            <p class="eyebrow">Shared album</p>
+            <h2 id="share-title">Album title</h2>
+          </div>
+        </div>
+
+        <p id="share-description" class="album-description"></p>
+
+        <div class="slideshow">
+          <div class="main-media">
+            <button id="share-prev" class="nav-btn" aria-label="Previous image">‹</button>
+            <img id="share-main-image" src="" alt="Album photo" />
+            <button id="share-next" class="nav-btn" aria-label="Next image">›</button>
+          </div>
+
+          <div class="thumb-strip-wrapper">
+            <div id="share-thumb-strip" class="thumb-strip"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="share-empty" class="empty-state share-empty">
+        <h2>Album not found</h2>
+        <p>This shared album could not be loaded. It may have been deleted or the link is incomplete.</p>
+      </section>
+    </main>
+
+  </body>
+</html>
