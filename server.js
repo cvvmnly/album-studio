@@ -193,6 +193,7 @@ function renderAlbumPage(album, req) {
       .main-media { position: relative; width: min(100%, 520px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 12px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .eyebrow { color: #e5e7eb; font-weight: 800; text-align: left; margin: 0 0 10px; }
+      .top-handle { width: min(100%, 520px); margin: 0 auto 10px; }
       .post-text { width: min(100%, 520px); margin: 12px auto 0; }
       .date { color: #94a3b8; font-size: .76rem; margin: 0 0 5px; }
       .description { color: #cbd5e1; margin: 0; text-align: left; font-size: .82rem; }
