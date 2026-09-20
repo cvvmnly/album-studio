@@ -144,7 +144,7 @@ async function invalidateAlbumGif(albumId) {
 }
 
 function renderAlbumPage(album, req) {
-  const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+  const baseUrl = process.env.PUBLIC_URL || `${req.get('host') === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
   const toAbsoluteUrl = (photo) => new URL(photo, `${baseUrl}/`).toString();
   const cover = toAbsoluteUrl(album.photos[0] || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85');
   const photos = album.photos.map(toAbsoluteUrl);
@@ -177,12 +177,14 @@ function renderAlbumPage(album, req) {
       body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; margin: 0; }
       main { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
       .album-shell { background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.25); border-radius: 24px; padding: 20px; }
-      .main-media { width: min(100%, 820px); aspect-ratio: 4 / 5; background: #020817; border-radius: 18px; overflow: hidden; }
+      .main-media { position: relative; width: min(100%, 640px); aspect-ratio: 4 / 5; margin: 0 auto; background: #020817; border-radius: 18px; overflow: hidden; }
       .main-media img { width: 100%; height: 100%; object-fit: contain; display: block; }
       .thumb-row { display: flex; gap: 12px; overflow-x: auto; margin-top: 16px; }
       .thumb-row img { width: 130px; height: 90px; object-fit: cover; border-radius: 12px; border: 2px solid transparent; }
-      .controls { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
-      .controls button { border: 1px solid #64748b; border-radius: 999px; background: #1e293b; color: #e5e7eb; padding: 10px 18px; cursor: pointer; }
+      .controls { position: absolute; inset: 0; pointer-events: none; }
+      .controls button { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.45); border-radius: 50%; background: rgba(15,23,42,.72); color: #fff; font-size: 28px; line-height: 1; cursor: pointer; pointer-events: auto; }
+      #previous-photo { left: 12px; }
+      #next-photo { right: 12px; }
       .title { font-size: clamp(1.8rem, 2vw, 2.5rem); margin: 0 0 8px; }
       .description { color: #cbd5e1; margin-bottom: 16px; }
     </style>
@@ -194,15 +196,14 @@ function renderAlbumPage(album, req) {
 
         <div class="main-media">
           <img src="${cover}" alt="${safeTitle}" />
+          <div class="controls">
+            <button type="button" id="previous-photo" aria-label="Previous photo">&#8249;</button>
+            <button type="button" id="next-photo" aria-label="Next photo">&#8250;</button>
+          </div>
         </div>
 
         <div class="thumb-row">
           ${photos.map((photo, index) => `<img src="${photo}" alt="${safeTitle} photo ${index + 1}" />`).join('')}
-        </div>
-
-        <div class="controls">
-          <button type="button" id="previous-photo">Previous</button>
-          <button type="button" id="next-photo">Next</button>
         </div>
       </div>
     </main>
@@ -302,7 +303,7 @@ app.get('/album/:id/preview.gif', async (req, res) => {
   }
 
   try {
-    const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+    const baseUrl = process.env.PUBLIC_URL || `${req.get('host') === 'localhost' ? 'http' : 'https'}://${req.get('host')}`;
     const gif = await getAlbumGif(album, baseUrl);
     res.type('gif').set('Cache-Control', 'public, max-age=3600').send(gif);
   } catch (error) {
