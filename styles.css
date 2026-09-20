@@ -219,12 +219,12 @@ textarea:focus {
 
 .album-view,
 .empty-state {
-  width: min(100%, 1100px);
+  width: min(100%, 760px);
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid var(--line);
-  border-radius: 26px;
+  border-radius: 16px;
   box-shadow: var(--shadow);
-  padding: 24px;
+  padding: 16px;
 }
 
 .empty-state {
@@ -240,17 +240,28 @@ textarea:focus {
 .viewer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  position: relative;
   gap: 16px;
   margin-bottom: 12px;
 }
 
 .viewer-header h2 {
-  margin-bottom: 0;
-  font-size: clamp(1.7rem, 1.3rem + 1vw, 2.5rem);
+  display: none;
+}
+
+.viewer-header .eyebrow {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .header-actions {
+  position: absolute;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -259,7 +270,10 @@ textarea:focus {
 
 .album-description {
   color: var(--muted);
-  margin-bottom: 18px;
+  max-width: 480px;
+  margin: 4px auto 14px;
+  text-align: center;
+  font-size: 0.82rem;
 }
 
 .upload-strip {
@@ -282,7 +296,7 @@ textarea:focus {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 520px);
+  width: min(100%, 420px);
   aspect-ratio: 4 / 5;
   min-height: 0;
   background: rgba(15, 23, 42, 0.9);
