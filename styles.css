@@ -219,10 +219,10 @@ textarea:focus {
 
 .album-view,
 .empty-state {
-  width: min(100%, 760px);
+  width: min(100%, 620px);
   background: rgba(15, 23, 42, 0.7);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: var(--shadow);
   padding: 16px;
 }
@@ -240,7 +240,7 @@ textarea:focus {
 .viewer-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
   gap: 16px;
   margin-bottom: 12px;
@@ -253,7 +253,7 @@ textarea:focus {
 .viewer-header .eyebrow {
   margin: 0;
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: none;
@@ -271,8 +271,8 @@ textarea:focus {
 .album-description {
   color: var(--muted);
   max-width: 480px;
-  margin: 4px auto 14px;
-  text-align: center;
+  margin: 4px 0 14px;
+  text-align: left;
   font-size: 0.82rem;
 }
 
@@ -296,12 +296,12 @@ textarea:focus {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(100%, 420px);
+  width: min(100%, 520px);
   aspect-ratio: 4 / 5;
   min-height: 0;
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
